@@ -1,0 +1,8 @@
+The flip_flop.py is just a python implementation of the code. 
+It is useful if you want to visualise the evolution of the simulation or
+is you prefer to read python. 
+
+
+The plotter_2.py is some plotting code. It plots the spin
+current and spin accumulation on separate graphs with
+the parameters summarised in a table at the bottom.
