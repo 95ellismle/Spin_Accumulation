@@ -18,12 +18,14 @@
 //////////////////////////////////////////////////////////////
 ////////////////               PARAMETERS              ///////
 double dt = 6e-21;														// Time step
-const double dx = 2e-10;												// Space Step
+const double dx = 5e-10;												// Space Step
 const double L  = 150e-9;												// Simulation size
-const double T = 600e-21;												// Simulation run time
+const double T = 24e-21;												// Simulation run time
 																            //
 const double boundaries[4] = {45e-9, 73e-9, 78e-9, 84e-9};  // Boundaries of magnetic layers (start of F1, end of F1, start of F2, end of F2)
-unsigned int Saves = 1;                                     // How many steps to save (keep this as 1 -not yet implemented)
+unsigned int Saves = 2;                                     // How many steps to save (keep this as 1 -not yet implemented)
+const double Save_Start = 0;											// When to start saving steps from the Simulation.
+const double Save_End = 100;											// When to stop saving steps from the simulatino.
 const double DL = 3e-9;                                     // Diffusiveness of interfaces
 const double minf = 4e7;                                    // Equilibrium spin accumulation
 const double je_peak = 1e11;                                // Peak of the ramp signal for charge Current
@@ -98,7 +100,7 @@ std::vector<double> grad_jmy (xlen, 0);																				//
 std::vector<double> grad_jmz (xlen, 0);																				//
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string filepath = "../../"; // Path to save the data to.
+std::string filepath = "./Data/"; // Path to save the data to.
 
 
 unsigned int iterations; // How many iterations will be carried out, this is normally determined by setting the T variable. However, a comand line argument can be used. E.g. -i=100.
@@ -128,30 +130,31 @@ int main(int argc, char* argv[])
 		fact3[i] = dt/(lambda_sf[i]*lambda_sf[i]);
 	}
 
+	std::vector<unsigned int> save_steps = save_steps_calc(Saves, iterations);
+	unsigned int count = 0;
 	// Run the solver for the set number of iterations.
 	for (unsigned int i=1; i<=iterations; i++)
 	{
 		std::cout << "iteration " << i << "/" << iterations << '\r';
 		Solver(Ux, Uy, Uz, jmx, jmy, jmz);
+		if (i == save_steps[count])
+		{
+			// These fill the first index of the Save_Ux vector. This Vector holds all the steps that should be saved.
+			// For example, if 100 steps have been completed and 2 steps should be saved the first and last steps are saved.
+			// If it is set to 3 then 0, 50 and 100 will be saved. (Not yet implemented).
+			Save_Ux[count] = Ux;
+			Save_Uy[count] = Uy;
+			Save_Uz[count] = Uz;
+			Save_Jmx[count] = jmx;
+			Save_Jmy[count] = jmy;
+			Save_Jmz[count] = jmz;
+		}
 	}
-
-	// These fill the first index of the Save_Ux vector. This Vector holds all the steps that should be saved.
-	// For example, if 100 steps have been completed and 2 steps should be saved the first and last steps are saved.
-	// If it is set to 3 then 0, 50 and 100 will be saved. (Not yet implemented).
-	Save_Ux[0] = Ux;
-	Save_Uy[0] = Uy;
-	Save_Uz[0] = Uz;
-	Save_Jmx[0] = jmx;
-	Save_Jmy[0] = jmy;
-	Save_Jmz[0] = jmz;
-
-	//std::cout << "\n" << '\n' << std::endl;
-	//is_valid(Uz);
 
 
 	Save_Params_V(); // Saves the vector parameters (beta, beta_prime etc...)
 	Save_Params_S(); // Saves scalar parameters (beta_peaks, beta_prime_peaks etc...)
 	//Save_Vector(jmz);// Will save vector to a file to be plotted.
-	Save_Data(); // Will save the Ux, Uy, Uz, Jmx, Jmy and Jmz data to a csv file.
+	Save_Data(save_steps); // Will save the Ux, Uy, Uz, Jmx, Jmy and Jmz data to a csv file.
 	return 0;
 }

@@ -20,7 +20,7 @@ plot_index = 'end'
 colours = ['r', 'g', 'b']
 Plot_XYZ = 'xyz'
 
-filepath = '/home/ellismle/Documents/Mphys_Project/Code/C++_Code'
+filepath = '../../Data/'
 
 def p(y):
     plt.close()
@@ -38,7 +38,13 @@ def read_data(path = filepath, files = ['Ux', 'Uy', 'Uz', 'Jmx', 'Jmy', 'Jmz', '
     filepaths = [path + i for i in files]
     data = [pd.read_csv(i) for i in filepaths]    
     return data
-ux, uy, uz, Jmx, Jmy, Jmz, params_v, params_s = read_data()
+ux_orig, uy_orig, uz_orig, Jmx_orig, Jmy_orig, Jmz_orig, params_v, params_s = read_data()
+ux = ux_orig.drop('dt', 1)
+uy = uy_orig.drop('dt', 1)
+uz = uz_orig.drop('dt', 1)
+Jmx = Jmx_orig.drop('dt', 1)
+Jmy = Jmy_orig.drop('dt', 1)
+Jmz = Jmz_orig.drop('dt', 1)
 
 def plot_index_convert(ind = plot_index, U = uz):
     if 'end' in ind:
@@ -53,6 +59,7 @@ def ax_filler(ax, intensity=0.15):
     return ax
 
 
+time_steps = ['dt']
 x = params_v['x']*1e9
 beta = params_v['Beta']
 beta_prime = params_v['Beta_Prime']
@@ -89,6 +96,23 @@ jmx = Jmx.loc[plot_index]
 jmy = Jmy.loc[plot_index]
 jmz = Jmz.loc[plot_index]
 
+def peak_finders(u):
+    mult = 3
+    try:
+        max_x = x[int(np.argmax(u[u > 1]))]
+        max_x  = [max_x + (mult*lambda_sf_peaks[0])*1e9, max_x - (mult*lambda_sf_peaks[0])*1e9]
+        print(max_x)
+    except ValueError:
+        max_x = [False]
+    try: 
+        min_x =x[int( np.argmin(u[u < -1]))]
+        min_x  = [min_x +(mult*lambda_sf_peaks[0])*1e9, min_x - (mult*lambda_sf_peaks[0])*1e9]
+    except ValueError:
+        min_x = [False]
+    tot_peak_locs = max_x + min_x
+    return [np.min(tot_peak_locs), np.max(tot_peak_locs)]
+
+
 def plot_setup():
     fig = plt.figure(facecolor='white', figsize=(16, 8))
     ax = plt.subplot2grid((6,2), (0,0), rowspan=5)
@@ -115,7 +139,9 @@ def plot_setup():
     
     ax_filler(ax_jm)
     ax_jm.set_title("Spin Current -Z", fontsize=14)
-    xlims = [25, 75]
+    xlims = peak_finders(Uz)
+    
+    
     ax.set_xlim(xlims)
     ax_jm.set_xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.95])

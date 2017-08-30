@@ -50,6 +50,24 @@ extern std::vector< std::vector<double> > Save_Jmz;
 ////////////////////////////////////////////////////////////////
 
 
+// Calculates which steps to save in the simulation
+std::vector<unsigned int> save_steps_calc(unsigned int Saves, unsigned int iterations)
+{
+   std::vector<unsigned int> steps2save (Saves, 0);
+   if (Saves == 1){
+      steps2save[0] = iterations;
+   }
+   if (Saves == 2){
+      steps2save[0] = 1;
+      steps2save[1] = iterations;
+   }
+   else{
+      for (unsigned int i=1; i<Saves-1; i++){
+         steps2save[i] = (int) i*(iterations/(Saves-1));
+      }steps2save[Saves - 1] = iterations;
+   }
+   return steps2save;
+}
 
 // A function to save a single vector in a specified location
 void Save_Vector(std::vector<double> v, std::string path = filepath + "vec")
@@ -118,7 +136,7 @@ paramsfile << beta_peaks[2] << ","
 }
 
 // A function to Save the Data in separate files for the separate components of spin current and spin accumulation.
-void Save_Data(std::string path = filepath)
+void Save_Data(std::vector<unsigned int> saved_steps, std::string path = filepath)
 {
    // Creating and Opening Files
 	std::ofstream Uxfile;
@@ -143,6 +161,12 @@ void Save_Data(std::string path = filepath)
 	Jmyfile.open(Jmy_filepath.c_str());
 	Jmzfile.open(Jmz_filepath.c_str());
 
+   Uxfile << "dt" << ",";
+   Uyfile << "dt" << ",";
+   Uzfile << "dt" << ",";
+   Jmxfile << "dt" << ",";
+   Jmyfile << "dt" << ",";
+   Jmzfile << "dt" << ",";
    for (unsigned int i=0;i<xlen;i++)
    {
       if (i < xlen - 1)
@@ -166,6 +190,12 @@ void Save_Data(std::string path = filepath)
    }
    for (unsigned int n=0; n<Save_Ux.size(); n++)
    {
+      Uxfile << saved_steps[n]*dt << ",";
+      Uyfile << saved_steps[n]*dt << ",";
+      Uzfile << saved_steps[n]*dt << ",";
+      Jmxfile << saved_steps[n]*dt << ",";
+      Jmyfile << saved_steps[n]*dt << ",";
+      Jmzfile << saved_steps[n]*dt << ",";
       for (unsigned int i=0;i<xlen;i++)
       {
          if (i < xlen - 1)
